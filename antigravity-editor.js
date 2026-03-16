@@ -1,6 +1,6 @@
 /**
  * ╔══════════════════════════════════════════════════════╗
- * ║         ANTIGRAVITY INSPECTOR LAYER v1.1             ║
+ * ║         ANTIGRAVITY INSPECTOR LAYER v1.0             ║
  * ║   Drop this script into any project to enable        ║
  * ║   visual element selection + AI-ready prompts        ║
  * ╚══════════════════════════════════════════════════════╝
@@ -10,11 +10,6 @@
  * 2. Click the "✦ Edit Mode" button that appears bottom-right
  * 3. Hover over any element to inspect it
  * 4. Click to get a ready-made prompt — copy & paste it to Antigravity!
- *
- * CHANGELOG v1.1:
- * - Fix: Panel now pushes page content left instead of overlapping it
- * - Fix: Fixed-position elements (nav, headers) shift in sync with panel
- * - Fix: Multiple clicks no longer stack the layout shift on fixed elements
  */
 
 (function () {
@@ -169,15 +164,26 @@
     }
     .ag-element-type {
       color: #a78bfa;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       font-family: 'Courier New', monospace;
+      word-break: break-all;
+      line-height: 1.5;
     }
     .ag-element-role {
       color: #fff;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      margin-top: 4px;
+      margin-top: 6px;
+    }
+    .ag-element-path {
+      color: #6366f1;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      margin-top: 6px;
+      opacity: 0.8;
+      word-break: break-all;
+      line-height: 1.5;
     }
     .ag-element-content {
       color: #9ca3af;
@@ -313,6 +319,7 @@
           <div class="ag-info-box">
             <div class="ag-element-type" id="ag-el-tag"></div>
             <div class="ag-element-role" id="ag-el-role"></div>
+            <div class="ag-element-path" id="ag-el-path"></div>
             <div class="ag-element-content" id="ag-el-content"></div>
           </div>
         </div>
@@ -396,32 +403,34 @@
     const alt = el.getAttribute('alt') || '';
     const href = el.getAttribute('href');
     const placeholder = el.getAttribute('placeholder');
+    const selector = getDomPath(el);
+    const selectorLine = `Element selector: ${selector}`;
 
     if (tag === 'img') {
-      return `Change the ${role} image${alt ? ` (alt: "${alt}")` : ''} to a new image.\nDescribe what the new image should show: [your description here]`;
+      return `Change the ${role} image${alt ? ` (alt: "${alt}")` : ''} to a new image.\n${selectorLine}\n\nDescribe what the new image should show: [your description here]`;
     }
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
-      return `Change the ${role} ${getTagLabel(el)} that currently says:\n"${text}"\n\nNew text: [your new heading here]`;
+      return `Change the ${role} ${getTagLabel(el)} that currently says:\n"${text}"\n${selectorLine}\n\nNew text: [your new heading here]`;
     }
     if (tag === 'p') {
-      return `Change the ${role} paragraph that currently says:\n"${text}"\n\nNew text: [your new paragraph here]`;
+      return `Change the ${role} paragraph that currently says:\n"${text}"\n${selectorLine}\n\nNew text: [your new paragraph here]`;
     }
     if (tag === 'a' || tag === 'button') {
-      return `Change the ${role} ${tag} that says "${text}"${href && href !== '#' ? ` (links to: ${href})` : ''}.\n\nNew label: [your new label]\nNew link (if applicable): [new URL]`;
+      return `Change the ${role} ${tag} that says "${text}"${href && href !== '#' ? ` (links to: ${href})` : ''}.\n${selectorLine}\n\nNew label: [your new label]\nNew link (if applicable): [new URL]`;
     }
     if (tag === 'span') {
-      return `Change the ${role} text span that says:\n"${text}"\n\nNew text: [your new text here]`;
+      return `Change the ${role} text span that says:\n"${text}"\n${selectorLine}\n\nNew text: [your new text here]`;
     }
     if (tag === 'input' || tag === 'textarea') {
-      return `Update the ${role} input field${placeholder ? ` (placeholder: "${placeholder}")` : ''}.\n\nWhat to change: [describe the change]`;
+      return `Update the ${role} input field${placeholder ? ` (placeholder: "${placeholder}")` : ''}.\n${selectorLine}\n\nWhat to change: [describe the change]`;
     }
     if (tag === 'li') {
-      return `Change the ${role} list item that says:\n"${text}"\n\nNew text: [your new list item]`;
+      return `Change the ${role} list item that says:\n"${text}"\n${selectorLine}\n\nNew text: [your new list item]`;
     }
     if (tag === 'div' || tag === 'section' || tag === 'article') {
-      return `Modify the ${role} section block.\nThis block contains: "${text.substring(0, 60)}..."\n\nDescribe what you'd like to change: [your change description]`;
+      return `Modify the ${role} section block.\nThis block contains: "${text.substring(0, 60)}..."\n${selectorLine}\n\nDescribe what you'd like to change: [your change description]`;
     }
-    return `Edit the ${role} ${getTagLabel(el)} element.\nCurrent content: "${text.substring(0, 60)}"\n\nDescribe what to change: [your change description]`;
+    return `Edit the ${role} ${getTagLabel(el)} element.\nCurrent content: "${text.substring(0, 60)}"\n${selectorLine}\n\nDescribe what to change: [your change description]`;
   }
 
   function getContentPreview(el) {
@@ -433,6 +442,47 @@
     }
     const text = el.textContent.trim().replace(/\s+/g, ' ');
     return text.length > 100 ? text.substring(0, 100) + '…' : text || '(empty)';
+  }
+
+  // Returns the full opening tag with id and classes shown
+  function getFullTag(el) {
+    const tag = el.tagName.toLowerCase();
+    let str = `<${tag}`;
+    if (el.id) str += ` id="${el.id}"`;
+    if (el.classList.length > 0) str += ` class="${[...el.classList].join(' ')}"`;
+    str += '>';
+    return str;
+  }
+
+  // Builds a short CSS selector path up to 4 levels deep
+  function getDomPath(el) {
+    const parts = [];
+    let current = el;
+    let depth = 0;
+    while (current && current !== document.body && depth < 4) {
+      const tag = current.tagName.toLowerCase();
+      let part = tag;
+      if (current.id) {
+        part += `#${current.id}`;
+        parts.unshift(part);
+        break; // ID is globally unique — stop here
+      }
+      if (current.classList.length > 0) {
+        part += '.' + [...current.classList].slice(0, 2).join('.');
+      } else {
+        // No class — add nth-of-type to disambiguate
+        const siblings = current.parentElement
+          ? [...current.parentElement.children].filter(c => c.tagName === current.tagName)
+          : [];
+        if (siblings.length > 1) {
+          part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+        }
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+      depth++;
+    }
+    return parts.join(' > ');
   }
 
   // ─── Inspector Logic ─────────────────────────────────────────────────────────
@@ -474,8 +524,9 @@
     const role = getElementRole(e.target);
     const tagLabel = getTagLabel(e.target);
 
-    document.getElementById('ag-el-tag').textContent = `<${e.target.tagName.toLowerCase()}>`;
+    document.getElementById('ag-el-tag').textContent = getFullTag(e.target);
     document.getElementById('ag-el-role').textContent = `${role} · ${tagLabel}`;
+    document.getElementById('ag-el-path').textContent = getDomPath(e.target);
     document.getElementById('ag-el-content').textContent = getContentPreview(e.target);
 
     currentPrompt = generatePrompt(e.target);
