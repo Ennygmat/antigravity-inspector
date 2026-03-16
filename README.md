@@ -31,6 +31,11 @@ That's it. No install, no build step, no dependencies.
 
 ## Changelog
 
+### v1.2
+- Panel now shows the full HTML tag with class names and ID (e.g. `<p class="testimonial-text">`)
+- DOM breadcrumb path shown for every selected element (e.g. `div#testimonial-3 > p.testimonial-text`)
+- CSS element selector included in every generated Antigravity prompt
+
 ### v1.1
 - Fix: Panel now pushes page content left instead of overlapping it
 - Fix: Fixed-position elements (nav, headers) shift in sync with panel
