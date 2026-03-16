@@ -1,6 +1,6 @@
 /**
  * ╔══════════════════════════════════════════════════════╗
- * ║         ANTIGRAVITY INSPECTOR LAYER v1.0             ║
+ * ║         ANTIGRAVITY INSPECTOR LAYER v1.2             ║
  * ║   Drop this script into any project to enable        ║
  * ║   visual element selection + AI-ready prompts        ║
  * ╚══════════════════════════════════════════════════════╝
@@ -10,6 +10,14 @@
  * 2. Click the "✦ Edit Mode" button that appears bottom-right
  * 3. Hover over any element to inspect it
  * 4. Click to get a ready-made prompt — copy & paste it to Antigravity!
+ *
+ * CHANGELOG:
+ * v1.2 - Show full tag with classes/id, DOM breadcrumb path in panel
+ *      - CSS selector included in every generated prompt
+ * v1.1 - Panel pushes page content left (no overlap)
+ *      - Fixed-position navbars/headers shift in sync with panel
+ *      - Multiple clicks no longer stack the layout shift
+ * v1.0 - Initial release
  */
 
 (function () {
